@@ -61,8 +61,17 @@ impl From<PathBuf> for RelativePath {
 }
 
 impl RelativePath {
-    // FIXME: split into resolve and resolve_unchecked to fix the existance check for removing
     pub fn resolve(&self, dir: Dir, ext: impl AsRef<str>) -> Result<PathBuf, Error> {
+        let path = self.resolve_unchecked(dir, ext)?;
+
+        if path.exists() {
+            return Ok(path);
+        }
+
+        Err(Error::NotFound(dir.component_str().to_string(), path))
+    }
+
+    pub fn resolve_unchecked(&self, dir: Dir, ext: impl AsRef<str>) -> Result<PathBuf, Error> {
         // make path absolute
         let mut path = if self.0.is_absolute() {
             self.0.to_path_buf()
@@ -77,9 +86,9 @@ impl RelativePath {
             return Ok(path);
         }
 
-        // if the path has the right extension it's not found
+        // if the path has the right extension it's where it should be
         if path.extension() == Some(&OsString::from(ext.as_ref())) {
-            return Err(Error::NotFound(dir.component_str().to_string(), path));
+            return Ok(path);
         }
 
         // append the provided file extension and recheck
@@ -93,12 +102,7 @@ impl RelativePath {
         new_ext.push(ext.as_ref());
         path.set_extension(new_ext);
 
-        // if the path exists we're done
-        if path.exists() {
-            return Ok(path);
-        }
-
-        Err(Error::NotFound(dir.component_str().to_string(), path))
+        Ok(path) 
     }
 
     pub fn path(&self) -> &Path {

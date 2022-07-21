@@ -59,12 +59,12 @@ pub fn rm(profile: RelativePath, dir: Dir, component: RelativePath) -> Result<()
         _ => unreachable!(),
     };
 
-    let component_path = component.resolve(dir, dir.ext_str())?;
+    let component_path = component.resolve_unchecked(dir, dir.ext_str())?;
     let mut target_component = None;
 
     for (idx, prof_component) in components.iter().enumerate() {
-        let prof_component_path =
-            RelativePath::from(prof_component.to_path_buf()).resolve(dir, dir.ext_str())?;
+        let prof_component_path = RelativePath::from(prof_component.to_path_buf())
+            .resolve_unchecked(dir, dir.ext_str())?;
 
         if prof_component_path == component_path {
             target_component = Some(idx);
