@@ -1,0 +1,18 @@
+[package]
+name = "reconf"
+version = "0.1.0"
+edition = "2021"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+clap = { version = "3.2.13", features = ["cargo"] }
+dashmap = "5.3.4"
+dirs = "4.0.0"
+handlebars = { version = "4.3.2", features = ["script_helper", "dir_source"] }
+main_error = "0.1.2"
+rhai = "1.8.0"
+serde = "1.0.139"
+tar = "0.4.38"
+thiserror = "1.0.31"
+toml = "0.5.9"
