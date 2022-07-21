@@ -1,4 +1,4 @@
-// Import and export data from other modules defined in the profile toml.
+// Import and export data from other modules defined in the profile manifest.
 import "urls" as URLS;
 import "factorial" as fac;
 
@@ -18,6 +18,9 @@ for i in 1..9 {
 
     factorials += fac::factorial(i).to_string();
 }
+
+// IF YOU'RE EXPERIENCING A PANIC change template to use and absolute path
+// THIS WILL OVERWRITE ANYTHING AT THIS PATH WITH THE GENERATED TEMPLATE!!!
 
 // NOTE: template does NOT write to the path when calling this function. The path gets cached along
 // with the template name and data until all modules have finished executing. This caching step is
