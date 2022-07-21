@@ -1,0 +1,7 @@
+[profile]
+name = "Readme"
+
+# All of these are optional. File extensions are optional. Paths relative to .config/reconf/{folder}
+modules = ["readme/readme.rhai", "readme/urls.rhai", "readme/factorial.rhai"]
+helpers = ["hex_to_rgb.rhai"]
+templates = ["readme.hbs"]

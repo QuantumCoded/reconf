@@ -61,6 +61,7 @@ impl From<PathBuf> for RelativePath {
 }
 
 impl RelativePath {
+    // FIXME: split into resolve and resolve_unchecked to fix the existance check for removing
     pub fn resolve(&self, dir: Dir, ext: impl AsRef<str>) -> Result<PathBuf, Error> {
         // make path absolute
         let mut path = if self.0.is_absolute() {

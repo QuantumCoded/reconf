@@ -2,7 +2,7 @@ use crate::dynamic_module_resolver::DynamicModuleResolver;
 use crate::{error::Error, relative_path::*};
 use dashmap::DashMap;
 use handlebars::Handlebars;
-use rhai::{Dynamic, Engine};
+use rhai::{Array, Dynamic, Engine};
 use serde::{Deserialize, Serialize};
 use std::fs::{write, File};
 use std::{collections::HashMap, io::Read, path::PathBuf, process::Command, sync::Arc};
@@ -25,6 +25,20 @@ pub struct ProfileData {
     pub templates: Vec<PathBuf>,
 }
 
+fn command(program: String, args: Option<Array>) {
+    match Command::new(program)
+        .args(
+            args.unwrap_or_default()
+                .into_iter()
+                .map(|arg| arg.to_string())
+                .collect::<Vec<_>>(),
+        )
+        .output()
+    {
+        _ => {}
+    }
+}
+
 pub fn apply(profile: RelativePath) -> Result<(), Error> {
     let mut engine = Engine::new();
     let mut registry = Handlebars::new();
@@ -36,15 +50,13 @@ pub fn apply(profile: RelativePath) -> Result<(), Error> {
 
     let prof: Profile = toml::from_str(&buf)?;
 
-    engine.register_fn(
-        "command",
-        |program: String, args: Option<Vec<String>>| match Command::new(program)
-            .args(args.unwrap_or_default())
-            .output()
-        {
-            _ => {}
-        },
-    );
+    engine.register_fn("command", |program: String| {
+        command(program, None);
+    });
+
+    engine.register_fn("command", |program: String, args: Array| {
+        command(program, Some(args));
+    });
 
     engine.register_fn("template", {
         let template = Arc::clone(&templates_map);
