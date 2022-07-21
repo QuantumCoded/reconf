@@ -4,8 +4,8 @@ import "factorial" as fac;
 
 // Prints text.
 print(
-"If this is your first time trying the example and you see a panic, \
-you will need to change the path in readme.rhai!"
+    "If this is your first time trying the example and you see a panic, \
+    you will need to change the path in ~/.config/reconf/modules/readme/readme.rhai!"
 );
 
 let factorials = "";
@@ -29,6 +29,8 @@ template("README.md", "readme", #{
     hb_url: URLS::handlebars,
     sum: 1 + 1,
     facs: factorials,
+    sum_ex: "1 + 1 = {{sum}}",
+    hex_ex: `{{hex_to_rgb "#AABBCC"}}`,
 });
 
 // Use shell commands.
