@@ -172,7 +172,7 @@ pub fn main() -> Result<Action, Error> {
     })
 }
 
-fn cli<'a>() -> Command<'a> {
+fn cli() -> Command {
     command!()
         .subcommand(
             Command::new("module")

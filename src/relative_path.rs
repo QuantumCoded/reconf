@@ -102,7 +102,7 @@ impl RelativePath {
         new_ext.push(ext.as_ref());
         path.set_extension(new_ext);
 
-        Ok(path) 
+        Ok(path)
     }
 
     pub fn path(&self) -> &Path {

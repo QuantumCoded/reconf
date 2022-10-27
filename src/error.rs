@@ -25,7 +25,6 @@ pub enum Error {
     // TODO: this should be used instead of a panic
     // #[error("attempted to template {0:?} after already templating")]
     // TemplateTwice(PathBuf),
-
     #[error("toml deserialize error")]
     TomlDeError(#[from] toml::de::Error),
 
@@ -45,5 +44,5 @@ pub enum Error {
     ScriptHelperError(Box<dyn std::error::Error>),
 
     #[error("error in rhai module {0:?}\n{1}")]
-    RhaiModuleError(PathBuf, Box<dyn std::error::Error>)
+    RhaiModuleError(PathBuf, Box<dyn std::error::Error>),
 }

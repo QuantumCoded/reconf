@@ -1,4 +1,5 @@
 use cli::Action::*;
+use profile::Profile;
 use relative_path::Dir;
 use std::{fs::File, io::copy, path::PathBuf};
 use tar::Archive;
@@ -18,7 +19,7 @@ fn main() -> main_error::MainResult {
         AddHelper { profile, helper } => component::add(profile, Dir::Helpers, helper)?,
         AddModule { profile, module } => component::add(profile, Dir::Modules, module)?,
         AddTemplate { profile, template } => component::add(profile, Dir::Templates, template)?,
-        ApplyProfile { profile } => profile::apply(profile)?,
+        ApplyProfile { profile } => Profile::open(profile)?.apply()?,
         Nothing => {}
         Restore => {
             let file = File::open(Dir::Config.as_base()?.join("backup.tar"))?;

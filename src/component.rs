@@ -1,4 +1,4 @@
-use crate::{error::Error, profile::Profile, relative_path::*};
+use crate::{error::Error, profile::ProfileData, relative_path::*};
 use std::fs::{write, File};
 use std::{collections::HashSet, io::Read};
 
@@ -9,11 +9,11 @@ pub fn add(profile: RelativePath, dir: Dir, component: RelativePath) -> Result<(
 
     File::open(&path)?.read_to_string(&mut buf)?;
 
-    let mut prof: Profile = toml::from_str(&buf)?;
+    let mut data: ProfileData = toml::from_str(&buf)?;
     let components = match dir {
-        Dir::Modules => &mut prof.inner.modules,
-        Dir::Helpers => &mut prof.inner.helpers,
-        Dir::Templates => &mut prof.inner.templates,
+        Dir::Helpers => &mut data.helpers,
+        Dir::Modules => &mut data.modules,
+        Dir::Templates => &mut data.templates,
         _ => unreachable!(),
     };
 
@@ -39,7 +39,7 @@ pub fn add(profile: RelativePath, dir: Dir, component: RelativePath) -> Result<(
 
     components.push(component.path().to_path_buf());
 
-    write(path, toml::to_string(&prof)?)?;
+    write(path, toml::to_string(&data)?)?;
 
     Ok(())
 }
@@ -51,11 +51,11 @@ pub fn rm(profile: RelativePath, dir: Dir, component: RelativePath) -> Result<()
 
     File::open(&path)?.read_to_string(&mut buf)?;
 
-    let mut prof: Profile = toml::from_str(&buf)?;
+    let mut data: ProfileData = toml::from_str(&buf)?;
     let components = match dir {
-        Dir::Modules => &mut prof.inner.modules,
-        Dir::Helpers => &mut prof.inner.helpers,
-        Dir::Templates => &mut prof.inner.templates,
+        Dir::Helpers => &mut data.helpers,
+        Dir::Modules => &mut data.modules,
+        Dir::Templates => &mut data.templates,
         _ => unreachable!(),
     };
 
@@ -88,7 +88,7 @@ pub fn rm(profile: RelativePath, dir: Dir, component: RelativePath) -> Result<()
         path.clone(),
     ))?);
 
-    write(path, toml::to_string(&prof)?)?;
+    write(path, toml::to_string(&data)?)?;
 
     Ok(())
 }
