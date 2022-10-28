@@ -22,9 +22,9 @@ pub enum Error {
     #[error("{0} {1:?} is used twice in profile {2:?}")]
     DupeProfVal(String, PathBuf, PathBuf),
 
-    // TODO: this should be used instead of a panic
-    // #[error("attempted to template {0:?} after already templating")]
-    // TemplateTwice(PathBuf),
+    #[error("attempted to template {0:?} after already templating")]
+    TemplateTwice(PathBuf),
+
     #[error("toml deserialize error")]
     TomlDeError(#[from] toml::de::Error),
 

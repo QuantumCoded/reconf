@@ -45,8 +45,8 @@ pub fn build(
             );
 
             if template_map.contains_key(&path) {
-                // FIXME: Make this use better error
-                panic!("attempt to template twice {:?}", &path);
+                eprintln!("{}", Error::TemplateTwice(path));
+                panic!("templating twice creates race condition");
             }
 
             template_map.insert(path, (name, data));
