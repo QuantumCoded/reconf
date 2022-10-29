@@ -7,12 +7,23 @@ use tar::Builder;
 impl Profile {
     pub fn apply(&self) -> Result<(), Error> {
         let mut rendered_template_map = HashMap::new();
+        let mut compiled_modules = HashMap::new();
+
+        // compile modules
+        for module in &self.modules {
+            compiled_modules.insert(
+                module,
+                self.engine
+                    .compile_file(module.to_path_buf())
+                    .map_err(|err| Error::RhaiModuleError(module.to_path_buf(), err.into()))?,
+            );
+        }
 
         // evaluate modules
-        for module in &self.modules {
+        for (path, ast) in compiled_modules {
             self.engine
-                .eval_file(module.to_path_buf())
-                .map_err(|err| Error::RhaiModuleError(module.to_path_buf(), err.into()))?;
+                .eval_ast(&ast)
+                .map_err(|err| Error::RhaiModuleError(path.to_path_buf(), err.into()))?;
         }
 
         // generate templates
