@@ -20,9 +20,9 @@ impl Profile {
         }
 
         // evaluate modules
-        for (path, ast) in compiled_modules {
+        for (&path, ast) in &compiled_modules {
             self.engine
-                .eval_ast(&ast)
+                .eval_ast(ast)
                 .map_err(|err| Error::RhaiModuleError(path.to_path_buf(), err.into()))?;
         }
 
@@ -55,6 +55,25 @@ impl Profile {
                 }
                 Ok(()) => {}
             };
+        }
+
+        // run after_template functions
+        for (path, mut ast) in compiled_modules {
+            if ast
+                .iter_functions()
+                .find(|f| f.name == "after_template" && f.params.len() == 0)
+                .is_some()
+            {
+                self.engine
+                    .eval_ast(
+                        &ast.clear_statements()
+                            .retain_functions(|_, _, name, params| {
+                                name == "after_template" && params == 0
+                            })
+                            .combine(self.engine.compile("after_template()").unwrap()),
+                    )
+                    .map_err(|err| Error::RhaiModuleError(path.to_path_buf(), err.into()))?;
+            }
         }
 
         Ok(())
