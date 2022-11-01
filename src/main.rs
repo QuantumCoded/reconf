@@ -16,10 +16,19 @@ fn main() -> main_error::MainResult {
     let action = cli::main()?;
 
     match action {
-        // TODO: Add a [settings] table in profiles for storing universal per-profile constants to be changed from CLI
         AddHelper { profile, helper } => component::add(profile, Dir::Helpers, helper)?,
         AddModule { profile, module } => component::add(profile, Dir::Modules, module)?,
         AddTemplate { profile, template } => component::add(profile, Dir::Templates, template)?,
+        ChangeSetting {
+            profile,
+            name,
+            value: Some(value),
+        } => profile::set_setting(profile, name, value)?,
+        ChangeSetting {
+            profile,
+            name,
+            value: None,
+        } => profile::rm_setting(profile, name)?,
         ApplyProfile { profile } => Profile::open(profile)?.apply()?,
         Nothing => {}
         Restore => {

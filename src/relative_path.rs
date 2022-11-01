@@ -52,6 +52,7 @@ impl Dir {
     }
 }
 
+#[derive(Debug)]
 pub struct RelativePath(PathBuf);
 
 impl From<PathBuf> for RelativePath {

@@ -1,7 +1,9 @@
 use crate::{error::Error, relative_path::RelativePath};
 use clap::{command, Arg, Command};
-use std::path::PathBuf;
+use std::{collections::HashMap, path::PathBuf};
+use toml::Value;
 
+#[derive(Debug)]
 pub enum Action {
     AddHelper {
         profile: RelativePath,
@@ -17,6 +19,11 @@ pub enum Action {
     },
     ApplyProfile {
         profile: RelativePath,
+    },
+    ChangeSetting {
+        profile: RelativePath,
+        name: String,
+        value: Option<Value>,
     },
     Nothing,
     Restore,
@@ -38,6 +45,56 @@ pub fn main() -> Result<Action, Error> {
     let matches = cli().get_matches();
 
     Ok(match matches.subcommand() {
+        Some(("apply", matches)) => {
+            let profile = PathBuf::from(
+                matches
+                    .get_one::<String>("profile")
+                    .expect("profile is required"),
+            )
+            .into();
+
+            Action::ApplyProfile { profile }
+        }
+
+        Some(("helper", matches)) => match matches.subcommand() {
+            Some(("add", matches)) => {
+                let profile = PathBuf::from(
+                    matches
+                        .get_one::<String>("profile")
+                        .expect("profile is required"),
+                )
+                .into();
+
+                let helper = PathBuf::from(
+                    matches
+                        .get_one::<String>("helper")
+                        .expect("helper is required"),
+                )
+                .into();
+
+                Action::AddHelper { profile, helper }
+            }
+
+            Some(("remove", matches)) => {
+                let profile = PathBuf::from(
+                    matches
+                        .get_one::<String>("profile")
+                        .expect("profile is required"),
+                )
+                .into();
+
+                let helper = PathBuf::from(
+                    matches
+                        .get_one::<String>("helper")
+                        .expect("helper is required"),
+                )
+                .into();
+
+                Action::RmHelper { profile, helper }
+            }
+            _ => Action::Nothing,
+        },
+
         Some(("module", matches)) => match matches.subcommand() {
             Some(("add", matches)) => {
                 let profile = PathBuf::from(
@@ -77,8 +134,10 @@ pub fn main() -> Result<Action, Error> {
             _ => Action::Nothing,
         },
 
-        Some(("helper", matches)) => match matches.subcommand() {
-            Some(("add", matches)) => {
+        Some(("restore", _)) => Action::Restore,
+
+        Some(("settings", matches)) => match matches.subcommand() {
+            Some(("set", matches)) => {
                 let profile = PathBuf::from(
                     matches
                         .get_one::<String>("profile")
@@ -86,14 +145,30 @@ pub fn main() -> Result<Action, Error> {
                 )
                 .into();
 
-                let helper = PathBuf::from(
-                    matches
-                        .get_one::<String>("helper")
-                        .expect("helper is required"),
-                )
-                .into();
+                let name = matches
+                    .get_one::<String>("name")
+                    .expect("setting name is required")
+                    .to_owned();
 
-                Action::AddHelper { profile, helper }
+                // FIXME: this is *really* bad, find some way to parse TOML without a table
+                let value = Some(toml::from_str::<'_, HashMap<String, Value>>(&format!(
+                    "data = {:?}",
+                    matches
+                        .get_one::<String>("value")
+                        .expect("setting value is required")
+                ))?)
+                .map(|map| {
+                    map.values()
+                        .next()
+                        .expect("setting value is required")
+                        .to_owned()
+                });
+
+                Action::ChangeSetting {
+                    profile,
+                    name,
+                    value,
+                }
             }
 
             Some(("remove", matches)) => {
@@ -104,15 +179,18 @@ pub fn main() -> Result<Action, Error> {
                 )
                 .into();
 
-                let helper = PathBuf::from(
-                    matches
-                        .get_one::<String>("helper")
-                        .expect("helper is required"),
-                )
-                .into();
+                let name = matches
+                    .get_one::<String>("name")
+                    .expect("setting name is required")
+                    .to_owned();
 
-                Action::RmHelper { profile, helper }
+                Action::ChangeSetting {
+                    profile,
+                    name,
+                    value: None,
+                }
             }
+
             _ => Action::Nothing,
         },
 
@@ -155,25 +233,67 @@ pub fn main() -> Result<Action, Error> {
             _ => Action::Nothing,
         },
 
-        Some(("apply", matches)) => {
-            let profile = PathBuf::from(
-                matches
-                    .get_one::<String>("profile")
-                    .expect("profile is required"),
-            )
-            .into();
-
-            Action::ApplyProfile { profile }
-        }
-
-        Some(("restore", _)) => Action::Restore,
-
         _ => Action::Nothing,
     })
 }
 
 fn cli() -> Command {
     command!()
+        .subcommand(
+            Command::new("apply")
+                .about("Apply a given profile")
+                .alias("a")
+                .arg(
+                    Arg::new("profile")
+                        .help("The profile to apply")
+                        .value_name("PROFILE")
+                        .index(1)
+                        .required(true),
+                ),
+        )
+        .subcommand(
+            Command::new("helper")
+                .about("Add or remove helpers from a given profile")
+                .alias("h")
+                .subcommand(
+                    Command::new("add")
+                        .about("Add a helper for a given profile")
+                        .alias("a")
+                        .arg(
+                            Arg::new("helper")
+                                .help("The helper to add")
+                                .value_name("HELPER")
+                                .index(1)
+                                .required(true),
+                        )
+                        .arg(
+                            Arg::new("profile")
+                                .help("The profile to add to")
+                                .value_name("PROFILE")
+                                .index(2)
+                                .required(true),
+                        ),
+                )
+                .subcommand(
+                    Command::new("remove")
+                        .about("Remove a helper for a given profile")
+                        .aliases(&["rm", "r"])
+                        .arg(
+                            Arg::new("helper")
+                                .help("The helper to remove")
+                                .value_name("HELPER")
+                                .index(1)
+                                .required(true),
+                        )
+                        .arg(
+                            Arg::new("profile")
+                                .help("The profile to remove from")
+                                .value_name("PROFILE")
+                                .index(2)
+                                .required(true),
+                        ),
+                ),
+        )
         .subcommand(
             Command::new("module")
                 .about("Add or remove modules from a given profile")
@@ -218,36 +338,48 @@ fn cli() -> Command {
                 ),
         )
         .subcommand(
-            Command::new("helper")
-                .about("Add or remove helpers from a given profile")
-                .alias("h")
+            Command::new("restore")
+                .about("Restore backed up config files")
+                .alias("r"),
+        )
+        .subcommand(
+            Command::new("settings")
+                .about("Add, remove, or change settings from a given profile")
+                .alias("s")
                 .subcommand(
-                    Command::new("add")
-                        .about("Add a helper for a given profile")
-                        .alias("a")
+                    Command::new("set")
+                        .about("Add or change a setting for a given profile")
+                        .alias("s")
                         .arg(
-                            Arg::new("helper")
-                                .help("The helper to add")
-                                .value_name("HELPER")
+                            Arg::new("name")
+                                .help("The name of the setting to add or change")
+                                .value_name("NAME")
                                 .index(1)
                                 .required(true),
                         )
                         .arg(
                             Arg::new("profile")
-                                .help("The profile to add to")
+                                .help("The profile the setting belongs to")
                                 .value_name("PROFILE")
                                 .index(2)
+                                .required(true),
+                        )
+                        .arg(
+                            Arg::new("value")
+                                .help("The (new) value of the setting")
+                                .value_name("VALUE")
+                                .index(3)
                                 .required(true),
                         ),
                 )
                 .subcommand(
                     Command::new("remove")
-                        .about("Remove a helper for a given profile")
+                        .about("Remove a setting from a given profile")
                         .aliases(&["rm", "r"])
                         .arg(
-                            Arg::new("helper")
-                                .help("The helper to remove")
-                                .value_name("HELPER")
+                            Arg::new("name")
+                                .help("The setting to remove")
+                                .value_name("NAME")
                                 .index(1)
                                 .required(true),
                         )
@@ -302,22 +434,5 @@ fn cli() -> Command {
                                 .required(true),
                         ),
                 ),
-        )
-        .subcommand(
-            Command::new("apply")
-                .about("Apply a given profile")
-                .alias("a")
-                .arg(
-                    Arg::new("profile")
-                        .help("The profile to apply")
-                        .value_name("PROFILE")
-                        .index(1)
-                        .required(true),
-                ),
-        )
-        .subcommand(
-            Command::new("restore")
-                .about("Restore backed up config files")
-                .alias("r"),
         )
 }

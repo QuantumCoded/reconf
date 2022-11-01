@@ -45,4 +45,7 @@ pub enum Error {
 
     #[error("error in rhai module {0:?}\n{1}")]
     RhaiModuleError(PathBuf, Box<dyn std::error::Error>),
+
+    #[error("there is no setting with the name {0:?} in the profile {1:?}")]
+    SettingNotFound(String, PathBuf),
 }

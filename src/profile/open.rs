@@ -23,7 +23,7 @@ impl Profile {
         let helpers = resolve_path_vec(&data.helpers, Dir::Helpers, "rhai")?;
         let modules = resolve_path_vec(&data.modules, Dir::Modules, "rhai")?;
         let templates = resolve_path_vec(&data.templates, Dir::Templates, "hbs")?;
-        let (engine, template_map) = engine::build(&modules)?;
+        let (engine, template_map) = engine::build(&modules, data.settings)?;
 
         // load helpers into Registry
         for helper in &helpers {
